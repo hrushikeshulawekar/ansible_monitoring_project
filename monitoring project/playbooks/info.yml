@@ -76,7 +76,7 @@
   gather_facts: no
 
   vars:
-    recipient_email: "ansibletest06@gmail.com"
+    recipient_email: "your-mail@gmail.com"
 
   tasks:
 
@@ -167,7 +167,7 @@
       mail:
         host: smtp.gmail.com
         port: 587
-        username: "ansibletest06@gmail.com"
+        username: "your-mail@gmail.com"
         password: "your password"
         to: "{{ recipient_email }}"
         subject: "AWS Dynamic Inventory Server Health Report"
