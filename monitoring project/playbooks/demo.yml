@@ -1,0 +1,149 @@
+---
+- name: AWS Dynamic Inventory Server Monitoring
+  hosts: _W_server_*
+  become: yes
+  gather_facts: yes
+
+  tasks:
+
+    - name: Remove old HTML report files
+      shell: rm -f /tmp/*.html
+      delegate_to: localhost
+      run_once: true
+
+    - name: Get Memory Information
+      shell: free -h
+      register: memory_info
+
+    - name: Get CPU Load Information
+      shell: uptime
+      register: cpu_info
+
+    - name: Get Disk Usage Information
+      shell: df -h /
+      register: disk_info
+
+    - name: Get Current Server Time
+      shell: date
+      register: time_info
+
+    - name: Create HTML row for each server
+      copy:
+        dest: "/tmp/{{ inventory_hostname }}.html"
+        content: |
+          <tr>
+
+            <td>{{ hostvars[inventory_hostname]['tags']['Name'] | default(inventory_hostname) }}</td>
+
+            <td>
+              <pre>{{ memory_info.stdout }}</pre>
+            </td>
+
+            <td>
+              <pre>{{ cpu_info.stdout }}</pre>
+            </td>
+
+            <td>
+              <pre>{{ disk_info.stdout }}</pre>
+            </td>
+
+            <td>
+              {{ time_info.stdout }}
+            </td>
+
+          </tr>
+
+      delegate_to: localhost
+
+- name: Generate Final HTML Report
+  hosts: localhost
+  gather_facts: no
+
+  vars:
+    recipient_email: "ansibletest06@gmail.com"
+
+  tasks:
+
+    - name: Combine all HTML rows
+      assemble:
+        src: /tmp
+        dest: /tmp/final_server_rows.html
+        regexp: '.*\.html$'
+
+    - name: Create Final HTML Report
+      copy:
+        dest: /tmp/aws_health_report.html
+        content: |
+          <html>
+
+          <head>
+
+            <style>
+
+              body {
+                font-family: Arial, sans-serif;
+              }
+
+              table {
+                border-collapse: collapse;
+                width: 100%;
+              }
+
+              th, td {
+                border: 1px solid #dddddd;
+                padding: 10px;
+                text-align: left;
+                vertical-align: top;
+              }
+
+              th {
+                background-color: #f2f2f2;
+              }
+
+              h2 {
+                color: #333333;
+              }
+
+              pre {
+                margin: 0;
+                font-size: 12px;
+              }
+
+            </style>
+
+          </head>
+
+          <body>
+
+            <h2>AWS Dynamic Inventory Server Health Report</h2>
+
+            <table>
+
+              <tr>
+                <th>Server Name</th>
+                <th>Memory</th>
+                <th>CPU</th>
+                <th>Disk</th>
+                <th>Time</th>
+              </tr>
+
+              {{ lookup('file', '/tmp/final_server_rows.html') }}
+
+            </table>
+
+          </body>
+
+          </html>
+
+    - name: Send Email Report
+      mail:
+        host: smtp.gmail.com
+        port: 587
+        username: "ansibletest06@gmail.com"
+        password: "utkz ildz aldm vtqe"
+        to: "{{ recipient_email }}"
+        subject: "AWS Dynamic Inventory Server Health Report"
+        subtype: html
+        body: "{{ lookup('file', '/tmp/aws_health_report.html') }}"
+        secure: starttls
+
