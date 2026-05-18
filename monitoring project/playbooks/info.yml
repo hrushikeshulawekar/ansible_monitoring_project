@@ -168,7 +168,7 @@
         host: smtp.gmail.com
         port: 587
         username: "ansibletest06@gmail.com"
-        password: "utkz ildz aldm vtqe"
+        password: "your password"
         to: "{{ recipient_email }}"
         subject: "AWS Dynamic Inventory Server Health Report"
         subtype: html
